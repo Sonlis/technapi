@@ -9,43 +9,43 @@ import (
 )
 
 type Response struct {
-    Status string `json:"status"`
-    ErrorMessage string `json:"errorMessage"`
+	Status       string `json:"status"`
+	ErrorMessage string `json:"errorMessage"`
 }
 
 func (c *TechniClient) executeRequest(req *http.Request) ([]byte, error) {
-    var respBody []byte
+	var respBody []byte
 
-    resp, err := c.c.Do(req)
-    if err != nil {
-        return respBody, fmt.Errorf("Failed execute request to login: %v", err)
-    }
-    
-    respBody, err = io.ReadAll(resp.Body)
-    if err != nil {
-        return respBody, fmt.Errorf("Failed to read response body: %v", err)
-    }
+	resp, err := c.c.Do(req)
+	if err != nil {
+		return respBody, fmt.Errorf("Failed execute request to login: %v", err)
+	}
 
-    if resp.StatusCode > 299 {
-        return respBody, fmt.Errorf("Received non-normal status code: %d, %s", resp.StatusCode, string(respBody))
-    }
+	respBody, err = io.ReadAll(resp.Body)
+	if err != nil {
+		return respBody, fmt.Errorf("Failed to read response body: %v", err)
+	}
 
-    err = checkReponseStatus(respBody)
+	if resp.StatusCode > 299 {
+		return respBody, fmt.Errorf("Received non-normal status code: %d, %s", resp.StatusCode, string(respBody))
+	}
 
-    return respBody, err
+	err = checkReponseStatus(respBody)
+
+	return respBody, err
 }
 
 func checkReponseStatus(respBody []byte) error {
-    var r *Response
+	var r *Response
 
-    err := json.Unmarshal(respBody, &r)
-    if err != nil {
-        return fmt.Errorf("Error unmarshaling technitium response: %v", err)
-    }
+	err := json.Unmarshal(respBody, &r)
+	if err != nil {
+		return fmt.Errorf("Error unmarshaling technitium response: %v", err)
+	}
 
-    if r.Status != "ok" {
-        return fmt.Errorf("%s", r.ErrorMessage)
-    }
+	if r.Status != "ok" {
+		return fmt.Errorf("%s", r.ErrorMessage)
+	}
 
-    return nil
+	return nil
 }
