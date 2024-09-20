@@ -17,7 +17,7 @@ type ZoneConfig struct {
     Zone string `yaml:"zone"`
     Type string `yaml:"type"`
     UseSoaSerialDateScheme string `yaml:"useSoaSerialDateScheme,omitempty"`
-    PrimaryNameServerAddress string `yaml:"primaryNameServerAddresses,omitempt"`
+    PrimaryNameServerAddress string `yaml:"primaryNameServerAddresses,omitempty"`
     ZoneTransferProtocol string `yaml:"zoneTransferProtocol,omitempty"`
     TsigKeyName string `yaml:"tsigKeyName,omitempty"`
     Protocol string `yaml:"protocol,omitempty"`
@@ -30,9 +30,14 @@ type ZoneConfig struct {
     ProxyPassword string `yaml:"proxyPassword,omitempty"`
 }
 
+type ZoneCreate struct {
+    Response Zone `json:"response"`
+}
+
 type ZoneList struct {
     Response Zones `json:"response"`
 }
+
  type Zones struct {
      PageNumber int `json:"pageNumber"`
      TotalPages int `json:"totalPages"`
@@ -41,10 +46,11 @@ type ZoneList struct {
  }
 
  type Zone struct {
-     Name string `json:"name"`
-     Type string `json:"type"`
+     Name string `json:"name,omitempty"`
+     Type string `json:"type,omitempty"`
      IsExpired bool `json:"isExpired,omitempty"`
-     Disabled bool `json:"disabled"`
+     Disabled bool `json:"disabled,omitempty"`
+     Domain string `json:"domain,omitempty"`
  }
 
 func ParseZoneConfig(configPath string) (*ZoneConfig, error) {
@@ -54,7 +60,7 @@ func ParseZoneConfig(configPath string) (*ZoneConfig, error) {
     }
 
     var zoneConfig *ZoneConfig
-    err = yaml.Unmarshal(yamlFile, zoneConfig)
+    err = yaml.Unmarshal(yamlFile, &zoneConfig)
     if err != nil {
         return nil, fmt.Errorf("Failed to unmarshal config file: %v", err)
     }
@@ -107,12 +113,37 @@ func (cfg *ZoneConfig) toQueryParameters() url.Values {
     return v
 }
 
-func (c *TechniClient) CreateZone(zoneConfig *ZoneConfig) error {
-    return nil     
+func (c *TechniClient) CreateZone(zoneConfig *ZoneConfig) (*ZoneCreate, error) {
+    var z *ZoneCreate
+    request_url := c.Url + ZoneApiPath + "/create"
+
+    req, err := http.NewRequest("GET", request_url, nil)
+    if err != nil {
+        return nil, fmt.Errorf("Failed to initialize list zones request: %v", err)
+    }
+
+    queryParams := zoneConfig.toQueryParameters()
+    req.URL.RawQuery = queryParams.Encode()
+
+    c.setTokenQueryParam(req)
+
+    respBody, err := c.executeRequest(req)
+    if err != nil {
+        return nil, fmt.Errorf("Failed to create Zone: %v", err)
+    }
+
+    err = yaml.Unmarshal(respBody, &z)
+    if err != nil {
+        return nil, fmt.Errorf("Failed to unmarshal Technitium's response: %v", err)
+    }
+    
+    return z, nil
+    
 }
 
 func (c *TechniClient) ListZones() (*ZoneList, error) {
     request_url := c.Url + ZoneApiPath + "/list"
+    var z *ZoneList
 
     req, err := http.NewRequest("GET", request_url, nil)
     if err != nil {
@@ -121,17 +152,15 @@ func (c *TechniClient) ListZones() (*ZoneList, error) {
 
     c.setTokenQueryParam(req)
 
-    var zoneList *ZoneList
-
     respBody, err := c.executeRequest(req)
     if err != nil {
         return nil, fmt.Errorf("Failed to list Technitium zones: %v", err)
     }
 
-    err = yaml.Unmarshal(respBody, &zoneList)
+    err = yaml.Unmarshal(respBody, &z)
     if err != nil {
         return nil, fmt.Errorf("Failed to unmarshal Technitium's response: %v", err)
     }
     
-    return zoneList, nil
+    return z, nil
 }
