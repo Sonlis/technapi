@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/sonlis/technapi/internal/api"
 	"github.com/sonlis/technapi/internal/config"
@@ -9,18 +10,32 @@ import (
 
 
 func main() {
+    technitiumUrl, user, password, err := setupVariables()
+    if err != nil {
+        fmt.Printf("Missing environment variable: %v\n", err)
+        os.Exit(1)
+    }
+
 	client := api.TechniClient{
-		Url: "http://192.168.0.13:5380",
+		Url: technitiumUrl,
 	}
-	client.GetSessionToken("", "")
+
+    err = client.GetSessionToken(user, password)
+    if err != nil {
+        fmt.Printf("Error retrieving session token: %v\n", err)
+        os.Exit(1)
+    }
+
 	zones, err := client.ListZones()
 	if err != nil {
-		fmt.Println("Error: ", err)
+		fmt.Printf("Error listing zones: %v\n", err)
+        os.Exit(1)
 	}
 
 	zoneConfig, err := config.ParseZoneConfig("./zone-config.yaml")
 	if err != nil {
-		fmt.Println("Error: ", err)
+		fmt.Printf("Error parsing local zone configuration: %v\n", err)
+        os.Exit(1)
 	}
 
 	createZone := true
@@ -35,18 +50,21 @@ func main() {
 	if createZone {
 		_, err := client.CreateZone(zoneConfig)
 		if err != nil {
-			fmt.Println("Error: ", err)
+			fmt.Printf("Error creating zone: %v\n", err)
+            os.Exit(1)
 		}
 	}
 
 	records, err := client.GetRecords(zoneConfig.Zone)
 	if err != nil {
-		fmt.Println("Error: ", err)
+		fmt.Printf("Error getting records: %v\n", err)
+        os.Exit(1)
 	}
 
 	ansibleConfig, err := config.ParseAnsibleConfig("./inventory.yaml")
 	if err != nil {
-		fmt.Println("Error: ", err)
+		fmt.Printf("Error parsing ansible configuration: %v\n", err)
+        os.Exit(1)
 	}
 
 	technitiumRecords := parseZoneRecords(records)
@@ -56,7 +74,7 @@ func main() {
     for _, record := range recordsToCreate {
         err := client.CreateRecord(record, zoneConfig.Zone)
         if err != nil {
-            fmt.Println("Error: ", err)
+            fmt.Printf("Error creating record %s: %v\n", record.Record, err)
         }
     }
 }
@@ -104,4 +122,20 @@ func filterExistingRecords(techRecord, ansibleRecord []config.DnsRecord) []confi
 		}
 	}
 	return recordsToCreate
+}
+
+func setupVariables() (string, string, string, error) {
+    url := os.Getenv("TECHNITIUM_URL")
+    if url == "" {
+        return "", "", "", fmt.Errorf("TECHNITIUM_URL not set.")
+    }
+    user := os.Getenv("TECHNITIUM_USER")
+    if user == "" {
+        return "", "", "", fmt.Errorf("TECHNITIUM_USER not set.")
+    }
+    password := os.Getenv("TECHNITIUM_PASSWORD")
+    if password == "" {
+        return "", "", "", fmt.Errorf("TECHNITIUM_PASSWORD not set.")
+    }
+    return url, user, password, nil
 }
