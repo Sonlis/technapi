@@ -34,7 +34,7 @@ type Zone struct {
 	Domain    string `json:"domain,omitempty"`
 }
 
-func (c *TechniClient) CreateZone(zoneConfig *config.ZoneConfig) (*ZoneCreate, error) {
+func (c *TechniClient) CreateZone(zoneConfig *config.ZoneConfig) (*Zone, error) {
 	var z *ZoneCreate
 	request_url := c.Url + ZoneApiPath + "/create"
 
@@ -58,10 +58,10 @@ func (c *TechniClient) CreateZone(zoneConfig *config.ZoneConfig) (*ZoneCreate, e
 		return nil, fmt.Errorf("Failed to unmarshal Technitium's response: %v", err)
 	}
 
-	return z, nil
+	return &z.Response, nil
 }
 
-func (c *TechniClient) ListZones() (*ZoneList, error) {
+func (c *TechniClient) ListZones() ([]Zone, error) {
 	var z *ZoneList
 	request_url := c.Url + ZoneApiPath + "/list"
 
@@ -82,5 +82,5 @@ func (c *TechniClient) ListZones() (*ZoneList, error) {
 		return nil, fmt.Errorf("Failed to unmarshal Technitium's response: %v", err)
 	}
 
-	return z, nil
+	return z.Response.Zones, nil
 }

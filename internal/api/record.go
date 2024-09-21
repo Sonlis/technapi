@@ -58,7 +58,16 @@ func (c *TechniClient) GetRecords(domain string) ([]Record, error) {
 		return nil, fmt.Errorf("Failed to unmarshal Technitium's response: %v", err)
 	}
 
-	records := removeRootDomain(r.Response.Records)
+	records := r.Response.Records
+
+	// It is assumed that all hosts are in the same domain, and that in the ansible configuration
+	// only the host is specified, not the whole domain.
+	// So when it is checked if the record exists or not, only the host is required.
+	// Should be moved to the function calling this one, as it's a bit weird to do data transformation
+	// in the function that should just returns records as they are in Technitium.
+	for i := range records {
+		records[i].removeRootDomain()
+	}
 
 	return records, nil
 }
@@ -76,21 +85,16 @@ func (c *TechniClient) CreateRecord(r config.DnsRecord, zone string) error {
 
 	c.setTokenQueryParam(req)
 
-	respBody, err := c.executeRequest(req)
+	_, err = c.executeRequest(req)
 	if err != nil {
 		return fmt.Errorf("Failed to add record: %v", err)
 	}
-    fmt.Println(req.URL)
-    fmt.Println(string(respBody))
 
-   return nil 
+	return nil
 }
 
-func removeRootDomain(records []Record) []Record {
-	for i := range records {
-		records[i].Name = strings.Split(records[i].Name, ".")[0]
-	}
-	return records
+func (r *Record) removeRootDomain() {
+	r.Name = strings.Split(r.Name, ".")[0]
 }
 
 func setGetRecordsParams(domain string, req *http.Request) url.Values {
@@ -101,12 +105,11 @@ func setGetRecordsParams(domain string, req *http.Request) url.Values {
 }
 
 func setCreateRecordParams(record config.DnsRecord, zone string, req *http.Request) url.Values {
-    q := req.URL.Query()
-    domain := record.Record + "." + zone
-    q.Add("zone", zone)
-    q.Add("domain", domain)
-    q.Add("type", "A")
-    q.Add("ipAddress", record.Ip)
-    return q
+	q := req.URL.Query()
+	domain := record.Record + "." + zone
+	q.Add("zone", zone)
+	q.Add("domain", domain)
+	q.Add("type", "A")
+	q.Add("ipAddress", record.Ip)
+	return q
 }
-

@@ -1,0 +1,5 @@
+services:
+  technitium:
+    image: technitium/dns-server:12.2.1
+    ports:
+      - "5380:5380"

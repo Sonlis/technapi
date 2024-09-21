@@ -18,7 +18,7 @@ func (c *TechniClient) executeRequest(req *http.Request) ([]byte, error) {
 
 	resp, err := c.c.Do(req)
 	if err != nil {
-		return respBody, fmt.Errorf("Failed execute request to login: %v", err)
+		return respBody, fmt.Errorf("Failed to execute request: %v", err)
 	}
 
 	respBody, err = io.ReadAll(resp.Body)
@@ -30,12 +30,12 @@ func (c *TechniClient) executeRequest(req *http.Request) ([]byte, error) {
 		return respBody, fmt.Errorf("Received non-normal status code: %d, %s", resp.StatusCode, string(respBody))
 	}
 
-	err = checkReponseStatus(respBody)
+	err = checkResponseStatus(respBody)
 
 	return respBody, err
 }
 
-func checkReponseStatus(respBody []byte) error {
+func checkResponseStatus(respBody []byte) error {
 	var r *Response
 
 	err := json.Unmarshal(respBody, &r)
