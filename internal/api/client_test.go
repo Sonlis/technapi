@@ -6,7 +6,6 @@ import (
 	"testing"
 )
 
-
 func TestGetSessionToken(t *testing.T) {
 	c := TechniClient{
 		Url: testUrl,

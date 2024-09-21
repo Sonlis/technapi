@@ -14,6 +14,8 @@ def setTestEnvVaribles():
     environ["TECHNITIUM_URL"] = "http://localhost:5380"
     environ["TECHNITIUM_USER"] = "admin"
     environ["TECHNITIUM_PASSWORD"] = "admin"
+    environ["ANSIBLE_INV_PATH"] = "./inventory.yaml"
+    environ["ZONE_CONF_PATH"] = "zone-config.yaml"
 
 
 def get_record_ip(records) -> str:

@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	technitiumUrl, user, password, err := setupVariables()
+	technitiumUrl, user, password, ansibleInvPath, zoneConfPath, err := setupVariables()
 	if err != nil {
 		fmt.Printf("Missing environment variable: %v\n", err)
 		os.Exit(1)
@@ -30,8 +30,8 @@ func main() {
 		fmt.Printf("Error listing zones: %v\n", err)
 		os.Exit(1)
 	}
-    
-	zoneConfig, err := config.ParseZoneConfig("./zone-config.yaml")
+
+	zoneConfig, err := config.ParseZoneConfig(zoneConfPath)
 	if err != nil {
 		fmt.Printf("Error parsing local zone configuration: %v\n", err)
 		os.Exit(1)
@@ -60,7 +60,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	ansibleConfig, err := config.ParseAnsibleConfig("./inventory.yaml")
+	ansibleConfig, err := config.ParseAnsibleConfig(ansibleInvPath)
 	if err != nil {
 		fmt.Printf("Error parsing ansible configuration: %v\n", err)
 		os.Exit(1)
@@ -123,18 +123,26 @@ func filterExistingRecords(techRecord, ansibleRecord []config.DnsRecord) []confi
 	return recordsToCreate
 }
 
-func setupVariables() (string, string, string, error) {
+func setupVariables() (string, string, string, string, string, error) {
 	url := os.Getenv("TECHNITIUM_URL")
 	if url == "" {
-		return "", "", "", fmt.Errorf("TECHNITIUM_URL not set.")
+		return "", "", "", "", "", fmt.Errorf("TECHNITIUM_URL not set.")
 	}
 	user := os.Getenv("TECHNITIUM_USER")
 	if user == "" {
-		return "", "", "", fmt.Errorf("TECHNITIUM_USER not set.")
+		return "", "", "", "", "", fmt.Errorf("TECHNITIUM_USER not set.")
 	}
 	password := os.Getenv("TECHNITIUM_PASSWORD")
 	if password == "" {
-		return "", "", "", fmt.Errorf("TECHNITIUM_PASSWORD not set.")
+		return "", "", "", "", "", fmt.Errorf("TECHNITIUM_PASSWORD not set.")
 	}
-	return url, user, password, nil
+	ansibleInvPath := os.Getenv("ANSIBLE_INV_PATH")
+	if ansibleInvPath == "" {
+		return "", "", "", "", "", fmt.Errorf("ANSIBLE_INV_PATH not set.")
+	}
+	zoneConfPath := os.Getenv("ZONE_CONF_PATH")
+	if zoneConfPath == "" {
+		return "", "", "", "", "", fmt.Errorf("ZONE_CONF_PATH not set.")
+	}
+	return url, user, password, ansibleInvPath, zoneConfPath, nil
 }

@@ -18,7 +18,7 @@ type LoginResponse struct {
 }
 
 const (
-	ApiUserPath = "/api/user"
+	ApiUserPath  = "/api/user"
 	testUser     = "admin"
 	testPassword = "admin"
 	testUrl      = "http://localhost:5380"
@@ -73,4 +73,3 @@ func GetTestClient() (*TechniClient, error) {
 
 	return c, nil
 }
-
