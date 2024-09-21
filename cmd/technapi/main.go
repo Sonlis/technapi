@@ -30,7 +30,7 @@ func main() {
 		fmt.Printf("Error listing zones: %v\n", err)
 		os.Exit(1)
 	}
-
+    
 	zoneConfig, err := config.ParseZoneConfig("./zone-config.yaml")
 	if err != nil {
 		fmt.Printf("Error parsing local zone configuration: %v\n", err)

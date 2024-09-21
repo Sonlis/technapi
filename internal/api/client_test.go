@@ -1,34 +1,11 @@
 package api
 
 import (
-	"fmt"
 	"net/http"
 	"net/url"
 	"testing"
 )
 
-const (
-	testUser     = "admin"
-	testPassword = "admin"
-	testUrl      = "http://localhost:5380"
-)
-
-func GetTestClient() (*TechniClient, error) {
-	c := &TechniClient{
-		Url: testUrl,
-	}
-
-	err := c.GetSessionToken(testUser, testPassword)
-	if err != nil {
-		return nil, fmt.Errorf("Error getting session token from Technitium: %v", err)
-	}
-
-	if c.sessionToken == "" {
-		return nil, fmt.Errorf("Session token is empty")
-	}
-
-	return c, nil
-}
 
 func TestGetSessionToken(t *testing.T) {
 	c := TechniClient{
